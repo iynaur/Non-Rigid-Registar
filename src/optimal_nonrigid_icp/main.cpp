@@ -47,31 +47,30 @@ int main(int argc, char**argv)
 
 
 	vtkSmartPointer<vtkPLYWriter> plyWriter = vtkSmartPointer<vtkPLYWriter>::New();
-	plyWriter->SetInput(template_polyData);
+	plyWriter->SetInputData(template_polyData);
 
 	float alpha = 10.0;
-	float beta = 1.0;
 	float gamma = 1.0;
-	int step = 10;
+	int step = 1;
 
 	for (int i = 0; i < step; ++i)
 	{
 		oni.initCompute();
 		std::cout << "initCompute() finished!" << std::endl;
-		oni.compute(alpha, beta, gamma);
+		oni.compute(alpha, gamma);
 		std::cout << "compute() finished!" << std::endl;
 
 		char num_str[100];
 		sprintf(num_str, "%d", i);
 		plyWriter->SetFileName( (template_filename.substr(0, template_filename.find_last_of('.')) + "_" + num_str).c_str() );
 		plyWriter->Write();
+        alpha = alpha * 0.5;
 	}
-
 	vtkSmartPointer<vtkPolyDataMapper> template_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
- 	template_mapper->SetInput(template_polyData);	
+ 	template_mapper->SetInputData(template_polyData);
 
   	vtkSmartPointer<vtkPolyDataMapper> target_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-  	target_mapper->SetInput(target_polyData);	
+  	target_mapper->SetInputData(target_polyData);
 
   	vtkSmartPointer<vtkActor> template_actor = vtkSmartPointer<vtkActor>::New();
   	template_actor->SetMapper(template_mapper);
@@ -88,7 +87,7 @@ int main(int argc, char**argv)
   	renderWindowInteractor->SetRenderWindow(renderWindow);
 
   	renderer->AddActor(template_actor);
-  	//renderer->AddActor(target_actor);
+  	renderer->AddActor(target_actor);
   	renderer->SetBackground(0.1804,0.5451,0.3412); // Sea green
 
 	vtkSmartPointer<vtkInteractorStyleRubberBandPick> interactorStyle = vtkSmartPointer<vtkInteractorStyleRubberBandPick>::New();
@@ -96,6 +95,5 @@ int main(int argc, char**argv)
 
   	renderWindow->Render();
   	renderWindowInteractor->Start();
-
 	return 0;
 }

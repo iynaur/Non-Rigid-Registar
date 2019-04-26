@@ -13,17 +13,18 @@
 
 #include <vector>
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
+#define NDEBUG
 
 typedef vtkSmartPointer<vtkPolyData> Mesh;
 
 typedef Mesh Template;
 typedef Mesh Target;
 typedef std::pair<int,int> Edge;
-typedef boost::shared_ptr< std::vector<Edge> > Edges;
+typedef std::shared_ptr< std::vector<Edge> > Edges;
 typedef vtkSmartPointer<vtkPoints> Vertices;
-typedef boost::shared_ptr< std::vector<float> > Weights;
+typedef std::shared_ptr< std::vector<float> > Weights;
 
 class OptimalNonrigidICP
 {
@@ -65,7 +66,7 @@ public:
 	{
 		_cellLocator = vtkSmartPointer<vtkCellLocator>::New();
 		_cellLocator->SetDataSet(_target);
-		_cellLocator->BuildLocator();		
+		_cellLocator->BuildLocator();
 	}
 
 	void verticesInit()
@@ -74,7 +75,7 @@ public:
 	}
 
 	void correspondencesInit()
-	{	
+	{
 		if (_correspondences == NULL) _correspondences = Vertices::New();
 
 		_correspondences->SetNumberOfPoints(_vertices->GetNumberOfPoints());
@@ -99,7 +100,7 @@ public:
 		for (int i = 0; i < _weights->size(); ++i) (*_weights)[i] = 1.0f;
 	}
 
-	int compute(float alpha, float beta, float gamma)
+	int compute(float alpha,    float gamma)
 	{
 		//To do nonrigid icp registration
 
@@ -107,6 +108,8 @@ public:
 		int m = _edges->size();
 
 		Eigen::SparseMatrix<float> A(4*m + n, 4*n);
+        std::cout << "The matrix A is of size "
+            << A.rows() << "x" << A.cols() << std::endl;
 
 		std::vector< Eigen::Triplet<float> > alpha_M_G;
 		for (int i = 0; i < m; ++i)
@@ -144,30 +147,37 @@ public:
 		std::cout << "A calculated!" << std::endl;
 
 		Eigen::MatrixX3f B = Eigen::MatrixX3f::Zero(4*m + n, 3);
+        std::cout << "The matrix B is of size "
+            << B.rows() << "x" << B.cols() << std::endl;
 		for (int i = 0; i < n; ++i)
 		{
 			double xyz[3];
 			_correspondences->GetPoint(i, xyz);
 
 			float weight = (*_weights)[i];
-			for (int j = 0; j < 3; j++) B(4*m + i, j) = weight * xyz[j];
+			for (int j = 0; j < 3; j++) {
+                B(4*m + i, j) = weight * xyz[j];
+            }
 		}
 		std::cout << "B calculated!" << std::endl;
 
 		Eigen::SparseMatrix<float> ATA = Eigen::SparseMatrix<float>(A.transpose()) * A;
 		std::cout << "ATA calculated!" << std::endl;
-		Eigen::MatrixX3f ATB = Eigen::SparseMatrix<float>(A.transpose()) * B;
+        Eigen::MatrixX3f ATB = Eigen::SparseMatrix<float>(A.transpose()) * B;
 		std::cout << "ATB calculated!" << std::endl;
 
-		Eigen::ConjugateGradient< Eigen::SparseMatrix<float> > solver;
-		solver.compute(ATA);
-		std::cout << "solver computed ATA!" << std::endl;
+		Eigen::SparseLU< Eigen::SparseMatrix<float>, Eigen::COLAMDOrdering<int> > solver;
+        // Compute the ordering permutation vector from the structural pattern of A
+        solver.analyzePattern(ATA);
+		std::cout << "ATA analyzed!" << std::endl;
+        // Compute the numerical factorization
+        solver.factorize(ATA);
+		std::cout << "ATA factorized!" << std::endl;
 		if (solver.info()!=Eigen::Success)
 		{
 			std::cerr << "Decomposition failed" << std::endl;
 			return 1;
 		}
-
 		Eigen::MatrixX3f X = solver.solve(ATB);
 		std::cout << "X calculated!" << std::endl;
 
@@ -208,4 +218,3 @@ private:
 };
 
 #endif
-
