@@ -9,7 +9,7 @@ SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 IF (WIN32)
 TARGET_LINK_LIBRARIES(tpsdemo GLU32 OPENGL32 glut32)
 ELSEIF (UNIX)
-TARGET_LINK_LIBRARIES(tpsdemo GLU /usr/lib/nvidia-331/libGL.so glut)
+TARGET_LINK_LIBRARIES(tpsdemo GLU libGL.so glut)
 ENDIF ()
 
 ADD_EXECUTABLE(2d-morph 2d-morph.cpp 2d-morph.h linalg3d.h ludecomposition.h)

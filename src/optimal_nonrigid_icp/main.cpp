@@ -1,7 +1,8 @@
 #include <iostream>
 #include <string>
 #include <vtkSmartPointer.h>
-//#include <vtkOBJReader.h>
+#include <vtkOBJReader.h>
+#include <vtkSimplePointsReader.h>
 #include <vtkPLYReader.h>
 #include <vtkPolyData.h>
 #include <vtkPolyDataMapper.h>
@@ -22,24 +23,24 @@ int main(int argc, char**argv)
 	std::string template_filename = argv[1];
 	std::string target_filename = argv[2];
 
-	// vtkSmartPointer<vtkOBJReader> template_reader = vtkSmartPointer<vtkOBJReader>::New();
-	// template_reader->SetFileName(template_filename.c_str());
-	// template_reader->Update();
+//     vtkSmartPointer<vtkSimplePointsReader> template_reader = vtkSmartPointer<vtkSimplePointsReader>::New();
+//     template_reader->SetFileName(template_filename.c_str());
+//     template_reader->Update();
 
-	// vtkSmartPointer<vtkOBJReader> target_reader = vtkSmartPointer<vtkOBJReader>::New();
-	// target_reader->SetFileName(target_filename.c_str());
-	// target_reader->Update();
+//     vtkSmartPointer<vtkSimplePointsReader> target_reader = vtkSmartPointer<vtkSimplePointsReader>::New();
+//     target_reader->SetFileName(target_filename.c_str());
+//     target_reader->Update();
 
-	vtkSmartPointer<vtkPLYReader> template_reader = vtkSmartPointer<vtkPLYReader>::New();
-	template_reader->SetFileName(template_filename.c_str());
-	template_reader->Update();
+    vtkSmartPointer<vtkOBJReader> template_reader = vtkSmartPointer<vtkOBJReader>::New();
+    template_reader->SetFileName(template_filename.c_str());
+    template_reader->Update();
 
-	vtkSmartPointer<vtkPLYReader> target_reader = vtkSmartPointer<vtkPLYReader>::New();
-	target_reader->SetFileName(target_filename.c_str());
-	target_reader->Update();
+    vtkSmartPointer<vtkOBJReader> target_reader = vtkSmartPointer<vtkOBJReader>::New();
+    target_reader->SetFileName(target_filename.c_str());
+    target_reader->Update();
 
-  	vtkSmartPointer<vtkPolyData> template_polyData = template_reader->GetOutput();
-	vtkSmartPointer<vtkPolyData> target_polyData = target_reader->GetOutput();
+    vtkSmartPointer<vtkPolyData> template_polyData(template_reader->GetOutput());
+    vtkSmartPointer<vtkPolyData> target_polyData  (target_reader->GetOutput());
 
 	OptimalNonrigidICP oni(template_polyData, target_polyData);
 	oni.init();
@@ -47,7 +48,7 @@ int main(int argc, char**argv)
 
 
 	vtkSmartPointer<vtkPLYWriter> plyWriter = vtkSmartPointer<vtkPLYWriter>::New();
-	plyWriter->SetInput(template_polyData);
+    plyWriter->SetInputData(template_polyData);
 
 	float alpha = 10.0;
 	float beta = 1.0;
@@ -68,10 +69,10 @@ int main(int argc, char**argv)
 	}
 
 	vtkSmartPointer<vtkPolyDataMapper> template_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
- 	template_mapper->SetInput(template_polyData);	
+    template_mapper->SetInputData(template_polyData);
 
   	vtkSmartPointer<vtkPolyDataMapper> target_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-  	target_mapper->SetInput(target_polyData);	
+    target_mapper->SetInputData(target_polyData);
 
   	vtkSmartPointer<vtkActor> template_actor = vtkSmartPointer<vtkActor>::New();
   	template_actor->SetMapper(template_mapper);
